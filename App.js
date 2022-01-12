@@ -1,111 +1,157 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import React, { useState } from 'react';
+import { StyleSheet, View, Alert, Text} from 'react-native';
+import Modal from "./components/Modal";
+import AddItem from './components/AddItem';
+import List from './components/list/List';
 
-import React from 'react';
-import type {Node} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+export default function App() {
+  const [textInput, setTextInput] = useState ("");
+  const [itemList, setItemList] = useState([]);
+  const [checkItemList, setCheckItemList] = useState([]);
+  
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const [itemSelected, setItemSelected] = useState({});
+  const [modalVisible, setModalVisible] = useState(false);
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+  const handleChangeText = (t) => setTextInput((t).toLowerCase());
+  const handleAddPress = () => {
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+    let unCheckItems = itemList.find(item => item.value === textInput);
+    let checkItems = checkItemList.find(item => item.value === textInput);
+    if ((unCheckItems && checkItems) === undefined && textInput !== '') {
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+      setItemList([
+        ...itemList, {
+          key: Math.random().toString(),
+          value: textInput,
+          checkList: false,
+        },
+
+      ]);
+
+    } else {
+      Alert.alert('Item repetido o invalido');
+    }
+      setTextInput("");
   };
 
+  const handleCheckItem = (key, value) => {
+    
+    setItemList(itemList.filter(item => item.key !== key));
+    setCheckItemList([
+    ...checkItemList, {
+      key : key,
+      value : value,
+      checkList: true,
+    },
+    
+    ]);
+    
+
+  };
+
+  const handleUnCheckItem = (key, value) => {
+
+    setCheckItemList(checkItemList.filter(item => item.key !== key));
+      setItemList([
+        ...itemList, {
+          key: key,
+          value: value,
+          checkList: false,
+      },
+      ]);
+
+  };
+
+  const handleConfirmDelete = (checkList) => {
+
+    if(checkList) {
+
+      setCheckItemList(checkItemList.filter(item => item.key !== itemSelected.key));
+
+    } else {
+
+      setItemList(itemList.filter(item => item.key !== itemSelected.key));
+    
+    }
+    
+    setModalVisible(false); 
+    setItemSelected({});
+
+  };
+  const handleModalOpen = (key, checkList) => {
+
+    if(checkList) {
+      setItemSelected(checkItemList.find(item => item.key === key)); 
+
+    } else {
+
+      setItemSelected(itemList.find(item => item.key === key));
+      
+    }
+    setModalVisible(true);
+    
+  }
+
+
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edito App.js para decir <Text style={styles.highlight}>Hola Mundo!</Text> 
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.container}>
+      
+
+      <AddItem handleChangeText={handleChangeText} handleAddPress={handleAddPress} textInput={textInput}/>
+
+      <View style={styles.listContainer}>
+
+        <List items={itemList} handleModalOpen={handleModalOpen} checkList={false} handleCheckItem={handleCheckItem}/>
+          
+      </View>
+      {checkItemList.length !== 0? 
+      
+        <View style={styles.checkListContainer}>
+
+          <Text>Tareas Completadas</Text>
+
+        <List items={checkItemList} handleModalOpen={handleModalOpen} checkList={true} handleUnCheckItem={handleUnCheckItem}/>
+    
+        </View>: null
+      }
+
+      {modalVisible? 
+          <Modal style={styles.modalContainer} itemSelected={itemSelected} handleConfirmDelete={handleConfirmDelete}/>
+           : <></>
+          }
+      
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    padding: 30,
+    marginTop: "10%",
+    justifyContent: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+    
+  listContainer: {
+      marginTop: "10%",
+      paddingBottom: '5%',
+      
+      
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+  checkListContainer: {
+    marginTop: "10%",
+    marginBottom: '10%',
+    paddingTop: '5%',
+    borderTopColor: '#333',
+    borderTopWidth: 1,
+    
+    
+},
+modalContainer: {
 
-export default App;
+  height:'30%',
+  width: '80%',
+
+},
+  
+});
